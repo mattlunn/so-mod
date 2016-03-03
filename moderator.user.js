@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Helpful Moderator Userscripts
 // @namespace    https://github.com/mattlunn/so-mod
-// @version      1.0
+// @version      1.1
 // @author       Matt
 // @include /^https?:\/\/(.*\.)?stackoverflow\.com/.*$/
 // @include /^https?:\/\/(.*\.)?stackexchange\.com/.*$/
