@@ -1,99 +1,99 @@
 // ==UserScript==
 // @name         Helpful Moderator Userscripts
 // @namespace    https://github.com/mattlunn/so-mod
-// @version      1.1
+// @version      1.2
 // @author       Matt
 // @include /^https?:\/\/(.*\.)?stackoverflow\.com/.*$/
 // @include /^https?:\/\/(.*\.)?stackexchange\.com/.*$/
 // ==/UserScript==
 /* jshint -W097 */
-'use strict';
+(function () {
+	'use strict';
 
-var Settings = (function () {
-	var key = 'mattlunn-moderator-settings';
+	var Settings = (function () {
+		var key = 'mattlunn-moderator-settings';
+		var master = null;
 
-	function Settings(settings, remote) {
-		this.settings = settings;
-		this.remote = remote;
+		function Settings(settings, remote) {
+			this.settings = settings;
+			this.remote = remote;
 
-		switch (settings.version) {
-			case 2:
-				this.settings.preferences.review_ban_message_from_profile = 'A number of your recent reviews have been incorrect. Please pay more attention to each review in future';
-				this.settings.preferences.review_ban_message_from_review = 'You reviewed {{review}} incorrectly. Please pay more attention to each review in future';
+			switch (settings.version) {
+				case undefined:
+					this.settings.preferences = {
+						decline_reasons: [
+							'we do not delete questions once they have accrued answers, as the posted solutions may prove helpful to future visitors',
+							'please use the standard close reasons to close questions, rather than the \'requires moderator attention\' flags'
+						],
+						message_templates: [{
+							name: 'creating accounts to bypass question ban',
+							message: 'Please stop creating new accounts to circumvent your question ban. Instead, read the following advise and edit your *existing* content to bring it inline with the site\'s guidelines.\n\nhttp://stackoverflow.com/help/question-bans\n\nI have deleted the additional accounts you created. Do not create any more.'
+						}],
+					};
+				case 2:
+					this.settings.preferences.review_ban_message_from_profile = 'A number of your recent reviews have been incorrect. Please pay more attention to each review in future';
+					this.settings.preferences.review_ban_message_from_review = 'You reviewed {{review}} incorrectly. Please pay more attention to each review in future';
+			}
+
+			this.settings.version = 3;
 		}
 
-		this.settings.version = Settings.defaults.version;
-	}
+		Settings.prototype.save = function () {
+			localStorage.setItem(key, JSON.stringify({
+				settings: this.settings,
+				remote: this.remote
+			}));
 
-	Settings.prototype.save = function () {
-		localStorage.setItem(key, JSON.stringify({
-			settings: this.settings,
-			remote: this.remote
-		}));
+			if (this.remote) {
+				return jQuery.post(this.remote, JSON.stringify(this.settings));
+			}
 
-		if (this.remote) {
-			return jQuery.post(this.remote, JSON.stringify(this.settings));
-		}
+			return jQuery.Deferred().resolve().promise();
+		};
 
-		return jQuery.Deferred().resolve().promise();
-	};
+		Settings.init = function () {
+			if (!master) {
+				var settings;
 
-	Settings.get = function () {
-		try {
-			return JSON.parse(localStorage.getItem(key)) || null;
-		} catch (e) {
-			return null;
-		}
-	};
+				master = jQuery.Deferred();
 
-	Settings.parse = function (json) {
-		return json.replace(/: *"((?:.|\s)+?[^\\])"/g, function (match, str) {
-			return ':"' + str.replace(/\n/g, "\\n") + '"';
-		});
-	};
+				try {
+					settings = JSON.parse(localStorage.getItem(key));
+				} catch (e) {}
 
-	Settings.format = function (obj) {
-		return JSON.stringify(obj, null, 4).replace(/: *"(.+?[^\\])"/g, function (match, str) {
-			return ':"' + str.replace(/\\n/g, "\n") + '"';
-		});
-	};
+				if (!settings) {
+					master.resolve(new Settings(Settings.defaults, null));
+				} else if (!settings.remote) {
+					master.resolve(new Settings(settings.settings, null));
+				} else {
+					jQuery.getJSON(settings.remote).done(function (data) {
+						master.resolve(new Settings(data, settings.remote));
+					}).fail(function (xhr, reason) {
+						master.reject(reason, new Settings(Settings.defaults, settings.remote));
+					});
+				}
+			}
 
-	Settings.defaults = Settings.prototype.defaults = {
-		version: 3, 
-		preferences: {
-			decline_reasons: [
-				'we do not delete questions once they have accrued answers, as the posted solutions may prove helpful to future visitors',
-				'please use the standard close reasons to close questions, rather than the \'requires moderator attention\' flags'
-			],
-			message_templates: [{
-				name: 'creating accounts to bypass question ban',
-				message: 'Please stop creating new accounts to circumvent your question ban. Instead, read the following advise and edit your *existing* content to bring it inline with the site\'s guidelines.\n\nhttp://stackoverflow.com/help/question-bans\n\nI have deleted the additional accounts you created. Do not create any more.'
-			}],
-			review_ban_message_from_profile: 'A number of your recent reviews have been incorrect. Please pay more attention to each review in future',
-			review_ban_message_from_review: 'You reviewed {{review}} incorrectly. Please pay more attention to each review in future'
-		}
-	};
+			return master.promise();
+		};
 
-	return Settings;
-}());
-
-; (function (cb) {
-	var settings = Settings.get();
-
-	if (settings === null) {
-		cb(null, new Settings(Settings.defaults, null));
-	} else {
-		if (settings.remote) {
-			jQuery.getJSON(settings.remote).then(function (data) {
-				cb(null, new Settings(data, settings.remote));
-			}).fail(function (xhr, err) {
-				cb(err, new Settings(settings.settings, settings.remote));
+		Settings.parse = function (json) {
+			return json.replace(/: *"((?:.|\s)+?[^\\])"/g, function (match, str) {
+				return ':"' + str.replace(/\n/g, "\\n") + '"';
 			});
-		} else {
-			cb(null, new Settings(settings.settings, null)); 
-		}
-	}
-}(function (err, settings) {
+		};
+
+		Settings.format = function (obj) {
+			return JSON.stringify(obj, null, 4).replace(/: *"(.+?[^\\])"/g, function (match, str) {
+				return ':"' + str.replace(/\\n/g, "\n") + '"';
+			});
+		};
+
+		Settings.defaults = new Settings({}, null).settings;
+
+		return Settings;
+	}());
+
 	var helpers = {
 		idFromUrl: function (url) {
 			return url.match(/\/users\/(\d+)\//)[1];
@@ -116,7 +116,7 @@ var Settings = (function () {
 			return str;
 		}
 	};
-	
+
 	var reviewBans = (function () {
 		var list = null;
 		
@@ -167,149 +167,161 @@ var Settings = (function () {
 		};
 	}());
 
-	jQuery(document).ready(function ($) {
-		$('<a href="#">manage userscript ' + (err ? '<span style="color:red">could not load settings (' + err + ')</span>' : '') + '</a>').on('click', function (e) {
-			e.preventDefault();
-			
-			$(this).loadPopup({
-				html: [
-					'<div class="popup no-further-action-popup">',
-						'<div class="popup-close"><a title="close this popup (or hit Esc)">&times;</a></div><h2>Userscript Settings:</h2>',
-						'<textarea rows="20" style="width: 900px; font-family: \'Courier New\'; margin-bottom: 10px;"></textarea><br />',
-						'<button name="save">save and reload</button> <a href="#" class="reset">defaults</a>',
-						'<span style="float: right;">Remote (<a href="#" class="generate">generate</a>):&nbsp;&nbsp;&nbsp;<input type="text" style="width: 300px; padding: 5px; margin: 0;" name="remote" /><button style="margin: -3px 0 0 5px" name="set">set</button></span>',
-					'</div>'
-				].join('')
-			}).then(function (popup) {
-				var textarea = popup.find('textarea').val(Settings.format(settings.settings.preferences));
-
-				if (settings.remote !== null) {
-					popup.find('[name="remote"]').val(settings.remote).data('remote', settings.remote);
-				}
-
-				popup.find('button[name="save"]').on('click', function (e) {
-					var spinner = $('<span style="color: orange"> saving...</span>');
-					var json = Settings.parse(textarea.val());
-
-					try {
-						settings.settings.preferences = JSON.parse(json);
-					} catch (e) {
-						return alert('Settings is not valid JSON.');
-					}
-
-					spinner.insertAfter(this);
-
-					settings.remote = popup.find('[name="remote"]').data('remote');
-					settings.save().then(function () {
-						spinner.css('color', 'green').text(' saved');
-						window.location.reload();
-					}).fail(function () {
-						spinner.css('color', 'red').text(' error').delay(5000).fadeOut('slow', function () {
-							$(this).remove();
-						});
-					});
-				});
-
-				popup.find('a.reset').on('click', function (e) {
-					textarea.val(Settings.format(settings.defaults.preferences));
+	(function () {
+		function initManageLink(err, settings) {
+			jQuery(document).ready(function ($) {
+				$('<a href="#">manage userscript ' + (err ? '<span style="color:red">could not load settings (' + err + ')</span>' : '') + '</a>').on('click', function (e) {
 					e.preventDefault();
-				});
+					
+					$(this).loadPopup({
+						html: [
+							'<div class="popup no-further-action-popup">',
+								'<div class="popup-close"><a title="close this popup (or hit Esc)">&times;</a></div><h2>Userscript Settings:</h2>',
+								'<textarea rows="20" style="width: 900px; font-family: \'Courier New\'; margin-bottom: 10px;"></textarea><br />',
+								'<button name="save">save and reload</button> <a href="#" class="reset">defaults</a>',
+								'<span style="float: right;">Remote (<a href="#" class="generate">generate</a>):&nbsp;&nbsp;&nbsp;<input type="text" style="width: 300px; padding: 5px; margin: 0;" name="remote" /><button style="margin: -3px 0 0 5px" name="set">set</button></span>',
+							'</div>'
+						].join('')
+					}).then(function (popup) {
+						var textarea = popup.find('textarea').val(Settings.format(settings.settings.preferences));
 
-				popup.find('a.generate').on('click', function (e) {
-					var remote = $('[name="remote"]');
-					e.preventDefault();
+						if (settings.remote !== null) {
+							popup.find('[name="remote"]').val(settings.remote).data('remote', settings.remote);
+						}
 
-					if (remote.val().length && !confirm('Are you sure you wish to replace the existing remote URL with a new one?')) {
-						return false;
-					}
+						popup.find('button[name="save"]').on('click', function (e) {
+							var spinner = $('<span style="color: orange"> saving...</span>');
+							var json = Settings.parse(textarea.val());
 
-					// http://stackoverflow.com/a/2117523/444991
-					remote.val('http://sandbox.mattlunn.me.uk/userscript/?id=' + ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-						var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-						return v.toString(16);
-					})));
-				});
-
-				popup.find('button[name="set"]').on('click', function (e) {
-					var remote = $('[name="remote"]');
-					var remoteVal = jQuery.trim(remote.val());
-
-					if (remoteVal.length) {
-						jQuery.get(remoteVal).done(function (val) {
-							if (Object.keys(val).length && confirm('Click "OK" to replace your local settings with those found remotely (don\'t forget to click "save" as well). Clicking "Cancel" will allow you to overwrite the remote settings with your local ones by clicking "save"')) {
-								textarea.val(Settings.format(JSON.stringify(new Settings(val, remoteVal).settings.preferences)));
-							} else {
-								alert('Click "save" to push your settings to the remote URL you specified');
+							try {
+								settings.settings.preferences = JSON.parse(json);
+							} catch (e) {
+								return alert('Settings is not valid JSON.');
 							}
 
-							remote.data('remote', remoteVal);
-						}).fail(function () {
-							alert('Could not retrieve settings from the remote URL you specified.');
+							spinner.insertAfter(this);
+
+							settings.remote = popup.find('[name="remote"]').data('remote');
+							settings.save().then(function () {
+								spinner.css('color', 'green').text(' saved');
+								window.location.reload();
+							}).fail(function () {
+								spinner.css('color', 'red').text(' error').delay(5000).fadeOut('slow', function () {
+									$(this).remove();
+								});
+							});
 						});
-					} else {
-						remote.data('remote', null);
-					}
-				});
+
+						popup.find('a.reset').on('click', function (e) {
+							textarea.val(Settings.format(Settings.defaults.preferences));
+							e.preventDefault();
+						});
+
+						popup.find('a.generate').on('click', function (e) {
+							var remote = $('[name="remote"]');
+							e.preventDefault();
+
+							if (remote.val().length && !confirm('Are you sure you wish to replace the existing remote URL with a new one?')) {
+								return false;
+							}
+
+							// http://stackoverflow.com/a/2117523/444991
+							remote.val('http://sandbox.mattlunn.me.uk/userscript/?id=' + ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+								var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+								return v.toString(16);
+							})));
+						});
+
+						popup.find('button[name="set"]').on('click', function (e) {
+							var remote = $('[name="remote"]');
+							var remoteVal = jQuery.trim(remote.val());
+
+							if (remoteVal.length) {
+								jQuery.get(remoteVal).done(function (val) {
+									if (Object.keys(val).length && confirm('Click "OK" to replace your local settings with those found remotely (don\'t forget to click "save" as well). Clicking "Cancel" will allow you to overwrite the remote settings with your local ones by clicking "save"')) {
+										textarea.val(Settings.format(JSON.stringify(new Settings(val, remoteVal).settings.preferences)));
+									} else {
+										alert('Click "save" to push your settings to the remote URL you specified');
+									}
+
+									remote.data('remote', remoteVal);
+								}).fail(function () {
+									alert('Could not retrieve settings from the remote URL you specified.');
+								});
+							} else {
+								remote.data('remote', null);
+							}
+						});
+					});
+				}).appendTo('#svnrev');
 			});
-		}).appendTo('#svnrev');
-	});
-
-	$(document).ajaxSend(function (e, xhr, options) {
-		if (options.url.startsWith('/admin/dismiss-flag')) {
-			options.dataFilter = function (data, type) {
-				var html = $('<div />').html(data);
-
-				html.find('li').last().before(settings.settings.preferences.decline_reasons.map(function (item) {
-					return [
-						'<li style="width: 380px">',
-							'<label><input name="dismiss_Options" type="radio" value="' + helpers.escapeHtml(item) + '" style="float: left"><span class="action-desc">' + helpers.escapeHtml(item) + '</span></label>',
-						'</li>'
-					].join('');
-				}).join(''));
-				
-				return html.html();
-			};
 		}
-	});
 
-	$(document).ajaxSend(function (e, xhr, options) {
-		if (options.url.startsWith('/admin/contact-user/template-popup/')) {
-			var fromUserName = $('.gravatar-wrapper-24').prop('title');
-			var toUserUrl = $('#addressing tr').filter(function () {
-				return jQuery.trim($(this).find('td:first-child').text()) === 'to';
-			}).find('.user-details a').prop('href');
+		Settings.init().done(function (settings) {
+			initManageLink(null, settings);
+		}).fail(function (error, defaults) {
+			initManageLink(error, defaults);
+		});
+	}());
 
-			if (!toUserUrl || !fromUserName) {
-				return;
+	Settings.init().done(function (settings) {
+		$(document).ajaxSend(function (e, xhr, options) {
+			if (options.url.startsWith('/admin/dismiss-flag')) {
+				options.dataFilter = function (data, type) {
+					var html = $('<div />').html(data);
+
+					html.find('li').last().before(settings.settings.preferences.decline_reasons.map(function (item) {
+						return [
+							'<li style="width: 380px">',
+								'<label><input name="dismiss_Options" type="radio" value="' + helpers.escapeHtml(item) + '" style="float: left"><span class="action-desc">' + helpers.escapeHtml(item) + '</span></label>',
+							'</li>'
+						].join('');
+					}).join(''));
+					
+					return html.html();
+				};
 			}
-
-			options.dataFilter = function (data, type) {
-				var html = $('<div />').html(data);
-
-				html.find('ul').append(settings.settings.preferences.message_templates.map(function (item, i) {
-					var message = 'Hello,\n\nI&#39;m writing in reference to your Stack Overflow account:\n\n' + toUserUrl + '\n\n' + item.message + '\n\nRegards  \n' + fromUserName + '  \nStack Overflow moderator';
-
-					return [
-						'<li>',
-							'<input type="radio" id="template-custom-' + i + '" name="mod-template" value="' + message + '"/>',
-							'<input type="hidden" id="template-custom-' + i + '-reason" value="for rule violations" />',
-							'<label for="template-custom-' + i + '" class="template-custom"><span class="action-name"> ' + item.name + '</span><span class="action-desc"> ' + item.message + '</span></label>',
-						'</li>'
-					].join('');
-				}).join(''));
-				
-				return html.html();
-			};
-		}
+		});
 	});
 
-	(function () {
-		if (window.location.pathname.startsWith('/review/') && typeof settings.settings.preferences.review_ban_message_from_review === 'string') {
-			var rbInit = reviewBans.init();
+	Settings.init().done(function (settings) {
+		$(document).ajaxSend(function (e, xhr, options) {
+			if (options.url.startsWith('/admin/contact-user/template-popup/')) {
+				var fromUserName = $('.gravatar-wrapper-24').prop('title');
+				var toUserUrl = $('#addressing tr').filter(function () {
+					return jQuery.trim($(this).find('td:first-child').text()) === 'to';
+				}).find('.user-details a').prop('href');
 
-			$(document).ajaxSend(function (e, xhr, options) {
-				if (options.url.startsWith('/review/next-task')) {
-					jQuery.when(xhr, rbInit).then(function () {
+				if (!toUserUrl || !fromUserName) {
+					return;
+				}
+
+				options.dataFilter = function (data, type) {
+					var html = $('<div />').html(data);
+
+					html.find('ul').append(settings.settings.preferences.message_templates.map(function (item, i) {
+						var message = 'Hello,\n\nI&#39;m writing in reference to your Stack Overflow account:\n\n' + toUserUrl + '\n\n' + item.message + '\n\nRegards  \n' + fromUserName + '  \nStack Overflow moderator';
+
+						return [
+							'<li>',
+								'<input type="radio" id="template-custom-' + i + '" name="mod-template" value="' + message + '"/>',
+								'<input type="hidden" id="template-custom-' + i + '-reason" value="for rule violations" />',
+								'<label for="template-custom-' + i + '" class="template-custom"><span class="action-name"> ' + item.name + '</span><span class="action-desc"> ' + item.message + '</span></label>',
+							'</li>'
+						].join('');
+					}).join(''));
+					
+					return html.html();
+				};
+			}
+		});
+	});
+
+	if (window.location.pathname.startsWith('/review/')) {
+		$(document).ajaxSend(function (e, xhr, options) {
+			if (options.url.startsWith('/review/next-task')) {
+				jQuery.when(Settings.init(), reviewBans.init(), xhr).done(function (settings) {
+					if (typeof settings.settings.preferences.review_ban_message_from_review === 'string') {
 						$('div.review-results a').each(function () {
 							var self = $(this);
 							var id = helpers.idFromUrl(self.prop('href'));
@@ -326,26 +338,28 @@ var Settings = (function () {
 								self.after(common + ' class="mattlunn-ban-user">ban</a>)');
 							}           
 						});
-					});
-				}
-			});
-		}
-	}());
-
-	if (typeof settings.settings.preferences.review_ban_message_from_profile === 'string') {
-		$('div.user-panel-mod-info td:contains(blocked from reviews)').next('td').each(function () {
-			var self = $(this);
-			var name = jQuery.trim($('.name').text());
-			var id = helpers.idFromUrl(location.href);
-			var common = '<a href="#" data-user-id="' + id + '" data-user-name="' + name + '" data-message="' + helpers.escapeHtml(settings.settings.preferences.review_ban_message_from_profile) + '"';
-
-			if (!self.find('a').length) {
-				self.html(common + ' class="mattlunn-ban-user">no</a>');
-			} else {
-				self.append(' (' + common + ' class="mattlunn-unban-user">unban</a>)');
+					}
+				});
 			}
 		});
 	}
+
+	Settings.init().done(function (settings) {
+		if (typeof settings.settings.preferences.review_ban_message_from_profile === 'string') {
+			$('div.user-panel-mod-info td:contains(blocked from reviews)').next('td').each(function () {
+				var self = $(this);
+				var name = jQuery.trim($('.name').text());
+				var id = helpers.idFromUrl(location.href);
+				var common = '<a href="#" data-user-id="' + id + '" data-user-name="' + name + '" data-message="' + helpers.escapeHtml(settings.settings.preferences.review_ban_message_from_profile) + '"';
+
+				if (!self.find('a').length) {
+					self.html(common + ' class="mattlunn-ban-user">no</a>');
+				} else {
+					self.append(' (' + common + ' class="mattlunn-unban-user">unban</a>)');
+				}
+			});
+		}
+	});
 
 	(function () {
 		function toggleState(a) {
@@ -407,4 +421,4 @@ var Settings = (function () {
 			e.preventDefault();
 		});
 	}());
-}));
+}());
