@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Helpful Moderator Userscripts
 // @namespace    https://github.com/mattlunn/so-mod
-// @version      1.2
+// @version      1.3
 // @author       Matt
 // @include /^https?:\/\/(.*\.)?stackoverflow\.com/.*$/
 // @include /^https?:\/\/(.*\.)?stackexchange\.com/.*$/
@@ -33,9 +33,13 @@
 				case 2:
 					this.settings.preferences.review_ban_message_from_profile = 'A number of your recent reviews have been incorrect. Please pay more attention to each review in future';
 					this.settings.preferences.review_ban_message_from_review = 'You reviewed {{review}} incorrectly. Please pay more attention to each review in future';
+				case 3:
+					this.settings.preferences.annotation_for_comment = 'Left the following comment on {{post}}: "{{comment}}"'
+					this.settings.preferences.show_cm_count_on_profile = true;
+					this.settings.preferences.highlight_cm_contacts_on_profile = true;
 			}
 
-			this.settings.version = 3;
+			this.settings.version = 4;
 		}
 
 		Settings.prototype.save = function () {
@@ -282,6 +286,81 @@
 				};
 			}
 		});
+	});
+
+	Settings.init().done(function (settings) {
+		if (settings.settings.preferences.annotation_for_comment) {
+			$(document).on('click', 'a.js-add-link.comments-link', function (e) {
+				var target = $('#' + $(this).closest('div').prop('id').replace(/comments-link/, 'add-comment'));
+
+				setTimeout(function () {
+					target.find('input[type="submit"][value="Add Comment"]').next('br').replaceWith('<label style="margin-left: 3px; display: block"><input type="checkbox" style="display: inline" class="annotate"/> annotate?');
+					target.on('submit', function (e) {
+						if (target.find('input.annotate').prop('checked')) {
+							var self = $(this);
+							var postParent = self.closest('.answer,.question');
+							var opId = helpers.idFromUrl(postParent.find('.post-signature div.user-details a').prop('href'));
+							var comment = self.find('textarea[name="comment"]').text();
+							var formatData = {
+								post: postParent.find('a.short-link').prop('href'),
+								comment: self.find('textarea[name="comment"]').val()
+							};
+
+							// Sanity check; don't leave crap annotation.
+							if (formatData.post && formatData.comment && opId) {
+								jQuery.post('/admin/users/' + opId + '/annotate', {
+									annotation: helpers.format(settings.settings.preferences.annotation_for_comment, formatData),
+									fkey: StackExchange.options.user.fkey
+								});
+							}
+						}
+					});
+				}, 1)
+			});
+		}
+	});
+
+	Settings.init().done(function (settings) {
+		var match = location.pathname.match(/^\/users\/(\d+)/);
+		var id;
+
+		if (match !== null && settings.settings.preferences.show_cm_count_on_profile) {
+			id = match[1];
+
+			jQuery.get('/users/history/' + id + '?type=CM+team+contacted+about+user').done(function (html) {
+				var contacts = $(html).find('#user-history tbody tr');
+
+				if (contacts.length) {
+					$('<a title="cm escalations" style="padding: 2px 3px; margin-left: 0; background-color: #FB464F" class="mod-flag-indicator supernovabg" href="/users/history/' + id + '">' + contacts.length + '</a>').insertAfter('.user-moderator-link');
+				}
+			});
+		} else {
+			match = location.pathname.match(/^\/users\/history\/(\d+)/);
+
+			if (match !== null && settings.settings.preferences.highlight_cm_contacts_on_profile) {
+				id = match[1];
+
+				jQuery.get('/users/history/' + id + '?type=CM+team+contacted+about+user').done(function (html) {
+					var contacts = $(html).find('#user-history').prop('id', 'user-escalations').css('margin-bottom', 30);
+
+					contacts.find('tbody tr').each(function () {
+						var commentTd = $(this.cells[2]);
+						var actionTd = $(this.cells[1]);
+						var comment = commentTd.html();
+						var by = comment.slice(comment.lastIndexOf('by'));
+
+						actionTd.html(by.slice('by'.length));
+						commentTd.html(comment.slice(0, comment.length - by.length));
+					});
+
+					if (contacts.length) {
+						var div = $('<div class="clear-both" />');
+
+						div.append('<h2>CM Escalations</h2>').append(contacts).prependTo('#mainbar .content-page');
+					}
+				});
+			}
+		}
 	});
 
 	Settings.init().done(function (settings) {
