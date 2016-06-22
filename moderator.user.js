@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Helpful Moderator Userscripts
 // @namespace    https://github.com/mattlunn/so-mod
-// @version      1.4
+// @version      1.5
 // @author       Matt
 // @include /^https?:\/\/(.*\.)?stackoverflow\.com/.*$/
 // @include /^https?:\/\/(.*\.)?stackexchange\.com/.*$/
@@ -243,7 +243,7 @@
 							if (remoteVal.length) {
 								jQuery.get(remoteVal).done(function (val) {
 									if (Object.keys(val).length && confirm('Click "OK" to replace your local settings with those found remotely (don\'t forget to click "save" as well). Clicking "Cancel" will allow you to overwrite the remote settings with your local ones by clicking "save"')) {
-										textarea.val(Settings.format(JSON.stringify(new Settings(val, remoteVal).settings.preferences)));
+										textarea.val(Settings.format(new Settings(val, remoteVal).settings.preferences));
 									} else {
 										alert('Click "save" to push your settings to the remote URL you specified');
 									}
