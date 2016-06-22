@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Helpful Moderator Userscripts
 // @namespace    https://github.com/mattlunn/so-mod
-// @version      1.3
+// @version      1.4
 // @author       Matt
 // @include /^https?:\/\/(.*\.)?stackoverflow\.com/.*$/
 // @include /^https?:\/\/(.*\.)?stackexchange\.com/.*$/
@@ -100,7 +100,7 @@
 
 	var helpers = {
 		idFromUrl: function (url) {
-			return url.match(/\/users\/(\d+)\//)[1];
+			return url.match(/\/users\/(-?\d+)\//)[1];
 		},
 
 		// http://stackoverflow.com/a/13371349/444991
@@ -299,7 +299,7 @@
 						if (target.find('input.annotate').prop('checked')) {
 							var self = $(this);
 							var postParent = self.closest('.answer,.question');
-							var opId = helpers.idFromUrl(postParent.find('.post-signature div.user-details a').prop('href'));
+							var opId = helpers.idFromUrl(postParent.find('.post-signature.owner div.user-details a').prop('href'));
 							var comment = self.find('textarea[name="comment"]').text();
 							var formatData = {
 								post: postParent.find('a.short-link').prop('href'),
