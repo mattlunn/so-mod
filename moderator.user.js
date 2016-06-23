@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Helpful Moderator Userscripts
 // @namespace    https://github.com/mattlunn/so-mod
-// @version      1.5
+// @version      1.6
 // @author       Matt
 // @include /^https?:\/\/(.*\.)?stackoverflow\.com/.*$/
 // @include /^https?:\/\/(.*\.)?stackexchange\.com/.*$/
@@ -37,9 +37,11 @@
 					this.settings.preferences.annotation_for_comment = 'Left the following comment on {{post}}: "{{comment}}"'
 					this.settings.preferences.show_cm_count_on_profile = true;
 					this.settings.preferences.highlight_cm_contacts_on_profile = true;
+				case 4:
+					this.settings.preferences.must_click_esc_to_close_popups = true;
 			}
 
-			this.settings.version = 4;
+			this.settings.version = 5;
 		}
 
 		Settings.prototype.save = function () {
@@ -435,6 +437,16 @@
 					self.html(common + ' class="mattlunn-ban-user">no</a>');
 				} else {
 					self.append(' (' + common + ' class="mattlunn-unban-user">unban</a>)');
+				}
+			});
+		}
+	});
+
+	Settings.init().done(function (settings) {
+		if (settings.settings.preferences.must_click_esc_to_close_popups) {
+			$(document).on('popupClosing', function (e) {
+				if (e.closeTrigger === 'click outside') {
+					e.preventDefault();
 				}
 			});
 		}
