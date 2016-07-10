@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Helpful Moderator Userscripts
 // @namespace    https://github.com/mattlunn/so-mod
-// @version      1.9
+// @version      1.10
 // @author       Matt
 // @match       *://*.askubuntu.com/*
 // @match       *://*.mathoverflow.net/*
@@ -55,7 +55,7 @@
 			}
 
 			this.settings.version = 5;
-			this.version = '1.9';
+			this.version = '1.10';
 		}
 
 		Settings.prototype.save = function () {
@@ -425,28 +425,40 @@
 	});
 
 	if (window.location.pathname.startsWith('/review/')) {
-		$(document).ajaxSend(function (e, xhr, options) {
-			if (options.url.startsWith('/review/next-task')) {
-				jQuery.when(Settings.init(), reviewBans.init(), xhr).done(function (settings) {
-					if (typeof settings.settings.preferences.review_ban_message_from_review === 'string') {
-						$('div.review-results a').each(function () {
-							var self = $(this);
-							var id = helpers.idFromUrl(self.prop('href'));
-							var user = reviewBans.getBannedUser(id);
-							var name = jQuery.trim(self.text());
-							var common = ' (<a href="#" data-user-id="' + id + '" data-user-name="' + name + '" data-message="' + helpers.escapeHtml(helpers.format(settings.settings.preferences.review_ban_message_from_review, {
-								review: window.location.href
-							})) + '"';
+		jQuery.when(Settings.init(), reviewBans.init()).done(function (settings) {
+			function addBanningOptionsToReviewers() {
+				$('span.mattlunn-ban-toggler-container').remove();
 
-							if (user) {
-								self.css('color', 'red').prop('title', 'User is banned from review until ' + user.until.toString());
-								self.after(common + ' class="mattlunn-unban-user">unban</a>)');
-							} else {
-								self.after(common + ' class="mattlunn-ban-user">ban</a>)');
-							}           
+				$('div.review-results a').each(function () {
+					var self = $(this);
+					var id = helpers.idFromUrl(self.prop('href'));
+					var user = reviewBans.getBannedUser(id);
+					var name = jQuery.trim(self.text());
+					var common = ' <span class="mattlunn-ban-toggler-container">(<a href="#" data-user-id="' + id + '" data-user-name="' + name + '" data-message="' + helpers.escapeHtml(helpers.format(settings.settings.preferences.review_ban_message_from_review, {
+						review: window.location.href
+					})) + '"';
+
+					if (user) {
+						self.css('color', 'red').prop('title', 'User is banned from review until ' + user.until.toString());
+						self.after(common + ' class="mattlunn-unban-user">unban</a>)</span>');
+					} else {
+						self.after(common + ' class="mattlunn-ban-user">ban</a>)</span>');
+					}
+				});
+			}
+
+			if (typeof settings.settings.preferences.review_ban_message_from_review === 'string') {
+				$(document).ajaxSuccess(function (e, xhr, options) {
+					if (options.url.startsWith('/review/next-task')) {
+						xhr.done(function () {
+							addBanningOptionsToReviewers();	
 						});
 					}
 				});
+
+				if ($('div.review-results').length) {
+					addBanningOptionsToReviewers();
+				}
 			}
 		});
 	}
