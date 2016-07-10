@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Helpful Moderator Userscripts
 // @namespace    https://github.com/mattlunn/so-mod
-// @version      1.6
+// @version      1.7
 // @author       Matt
 // @include /^https?:\/\/(.*\.)?stackoverflow\.com/.*$/
 // @include /^https?:\/\/(.*\.)?stackexchange\.com/.*$/
@@ -291,6 +291,18 @@
 	});
 
 	Settings.init().done(function (settings) {
+		function createAnnotation(comment, post) {
+			var annotation = helpers.format(settings.settings.preferences.annotation_for_comment, {
+				post: post,
+				comment: comment
+			});
+
+			return annotation.length > 300 ? helpers.format(settings.settings.preferences.annotation_for_comment, {
+				post: post,
+				comment: comment.slice(0, 300 - 3 - annotation.length) + '...'
+			}) : annotation;
+		}
+
 		if (settings.settings.preferences.annotation_for_comment) {
 			$(document).on('click', 'a.js-add-link.comments-link', function (e) {
 				var target = $('#' + $(this).closest('div').prop('id').replace(/comments-link/, 'add-comment'));
@@ -301,20 +313,14 @@
 						if (target.find('input.annotate').prop('checked')) {
 							var self = $(this);
 							var postParent = self.closest('.answer,.question');
-							var opId = helpers.idFromUrl(postParent.find('.post-signature.owner div.user-details a').prop('href'));
-							var comment = self.find('textarea[name="comment"]').text();
-							var formatData = {
-								post: postParent.find('a.short-link').prop('href'),
-								comment: self.find('textarea[name="comment"]').val()
-							};
+							var opId = helpers.idFromUrl(postParent.find('table.fw td.post-signature:last div.user-details a').prop('href'));
 
-							// Sanity check; don't leave crap annotation.
-							if (formatData.post && formatData.comment && opId) {
-								jQuery.post('/admin/users/' + opId + '/annotate', {
-									annotation: helpers.format(settings.settings.preferences.annotation_for_comment, formatData),
-									fkey: StackExchange.options.user.fkey
-								});
-							}
+							jQuery.post('/admin/users/' + opId + '/annotate', {
+								annotation: createAnnotation(self.find('textarea[name="comment"]').val(), postParent.find('a.short-link').prop('href')),
+								fkey: StackExchange.options.user.fkey
+							}).fail(function () {
+								alert('Could not add an annotation to the users profile. Sorry.');
+							});
 						}
 					});
 				}, 1)
