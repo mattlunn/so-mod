@@ -39,15 +39,15 @@ You can also save your settings remotely (which will allow you to share your set
  
  - `annotation_for_comment`
  
- Adds an "annotate?" checkbox next to the "Add comment" button, which will automatically leave an annotation on the users profile when submitting the comment. You can use the magic values `{{post}}` and `{{comment}}` within the message, which will be substituted in the comment with a link to the post the comment was left on, and the comment text itself.
+ Adds an "annotate?" checkbox next to the "Add comment" button, which will automatically leave an annotation on the users profile when submitting the comment. You can use the magic values `{{post}}` and `{{comment}}` within the message, which will be substituted in the annotation with a link to the post the comment was left on, and the comment text itself.
 
  - `highlight_cm_contacts_on_profile`
  
- Adds an additional number next to the annotation/ flag count for a user to show how many "CM Escalations" have been raised for the user. Clicking the number will take you to the /history page, so you can see the CM escalations.
+ Adds an additional number next to the annotation/ flag count for a user to show how many "CM Escalations" have been raised for the user. Clicking the number will take you to the user's `/history` page, so you can see the CM escalations.
 
  - `show_cm_count_on_profile`
  
- Adds an additional section to a users /history page, to show CM Escalations for the user.
+ Adds an additional section to a user's `/history` page, to show CM Escalations for the user.
 
  - `must_click_esc_to_close_popups`
  
