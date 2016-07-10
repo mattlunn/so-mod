@@ -31,7 +31,7 @@
 						}],
 					};
 				case 2:
-					this.settings.preferences.review_ban_message_from_profile = 'A number of your recent reviews have been incorrect. Please pay more attention to each review in future';
+					this.settings.preferences.review_ban_message_from_profile = 'A number of your recent reviews have been incorrect. Please pay more attention to each review in the future';
 					this.settings.preferences.review_ban_message_from_review = 'You reviewed {{review}} incorrectly. Please pay more attention to each review in future';
 				case 3:
 					this.settings.preferences.annotation_for_comment = 'Left the following comment on {{post}}: "{{comment}}"'
