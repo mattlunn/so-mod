@@ -286,6 +286,12 @@
 					
 					return html.html();
 				};
+
+				xhr.done(function () {
+					setTimeout(function () {
+						$('div.popup').center();
+					});
+				});
 			}
 		});
 	});
