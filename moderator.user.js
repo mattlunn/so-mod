@@ -447,6 +447,7 @@
 				});
 			}
 
+			// See #2.
 			if (typeof settings.settings.preferences.review_ban_message_from_review === 'string') {
 				$(document).ajaxSuccess(function (e, xhr, options) {
 					if (options.url.startsWith('/review/next-task')) {
