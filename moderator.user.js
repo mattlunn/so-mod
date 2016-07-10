@@ -197,7 +197,7 @@
 						html: [
 							'<div class="popup no-further-action-popup">',
 								'<div class="popup-close"><a title="close this popup (or hit Esc)">&times;</a></div><h2>SO-mod Userscript Settings (v' + settings.version + '):</h2>',
-								'<textarea rows="20" style="width: 900px; font-family: \'Courier New\'; margin-bottom: 10px;"></textarea><br />',
+								'<textarea rows="30" style="width: 900px; font-family: \'Courier New\'; margin-bottom: 10px;"></textarea><br />',
 								'<button name="save">save and reload</button> <a href="#" class="reset">defaults</a>',
 								'<span style="float: right;">Remote (<a href="#" class="generate">generate</a>):&nbsp;&nbsp;&nbsp;<input type="text" style="width: 300px; padding: 5px; margin: 0;" name="remote" /><button style="margin: -3px 0 0 5px" name="set">set</button></span>',
 							'</div>'
