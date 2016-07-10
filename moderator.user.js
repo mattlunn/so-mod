@@ -3,8 +3,21 @@
 // @namespace    https://github.com/mattlunn/so-mod
 // @version      1.7
 // @author       Matt
-// @include /^https?:\/\/(.*\.)?stackoverflow\.com/.*$/
-// @include /^https?:\/\/(.*\.)?stackexchange\.com/.*$/
+// @match       *://*.askubuntu.com/*
+// @match       *://*.mathoverflow.net/*
+// @match       *://*.serverfault.com/*
+// @match       *://*.stackapps.com/*
+// @match       *://*.stackexchange.com/*
+// @match       *://*.stackoverflow.com/*
+// @match       *://*.superuser.com/*
+// @exclude     *://api.stackexchange.com/*
+// @exclude     *://blog.stackexchange.com/*
+// @exclude     *://blog.stackoverflow.com/*
+// @exclude     *://chat.stackexchange.com/*
+// @exclude     *://chat.stackoverflow.com/*
+// @exclude     *://data.stackexchange.com/*
+// @exclude     *://elections.stackexchange.com/*
+// @exclude     *://stackexchange.com/*
 // ==/UserScript==
 /* jshint -W097 */
 (function () {
@@ -42,6 +55,7 @@
 			}
 
 			this.settings.version = 5;
+			this.version = '1.7';
 		}
 
 		Settings.prototype.save = function () {
@@ -176,13 +190,13 @@
 	(function () {
 		function initManageLink(err, settings) {
 			jQuery(document).ready(function ($) {
-				$('<a href="#">manage userscript ' + (err ? '<span style="color:red">could not load settings (' + err + ')</span>' : '') + '</a>').on('click', function (e) {
+				$('<a href="#">manage SO-mod userscript ' + (err ? '<span style="color:red">could not load settings (' + err + ')</span>' : '') + '</a>').on('click', function (e) {
 					e.preventDefault();
 					
 					$(this).loadPopup({
 						html: [
 							'<div class="popup no-further-action-popup">',
-								'<div class="popup-close"><a title="close this popup (or hit Esc)">&times;</a></div><h2>Userscript Settings:</h2>',
+								'<div class="popup-close"><a title="close this popup (or hit Esc)">&times;</a></div><h2>SO-mod Userscript Settings (v' + settings.version + '):</h2>',
 								'<textarea rows="20" style="width: 900px; font-family: \'Courier New\'; margin-bottom: 10px;"></textarea><br />',
 								'<button name="save">save and reload</button> <a href="#" class="reset">defaults</a>',
 								'<span style="float: right;">Remote (<a href="#" class="generate">generate</a>):&nbsp;&nbsp;&nbsp;<input type="text" style="width: 300px; padding: 5px; margin: 0;" name="remote" /><button style="margin: -3px 0 0 5px" name="set">set</button></span>',
@@ -259,7 +273,7 @@
 							}
 						});
 					});
-				}).appendTo('#svnrev');
+				}).appendTo('#svnrev').before(' | ');
 			});
 		}
 
@@ -286,7 +300,7 @@
 					
 					return html.html();
 				};
-
+ 
 				xhr.done(function () {
 					setTimeout(function () {
 						$('div.popup').center();
