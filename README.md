@@ -53,6 +53,10 @@ You can also save your settings remotely (which will allow you to share your set
  
  Prevents popups automatically closing when you click outside them (e.g. misclicks, or to highlight text to include in the popup form). Instead, you must press `Esc` on your keyboard, or the `x` or `Cancel` button in the popup UI.
 
+  - `add_reputation_to_flag_page`
+ 
+ Adds the flaggers's reputation next to their name on the /admin/dashboard page.
+
 # Improvements, Pull Requests, Issues
 
 ... all will be gratefully received. Feel free to ping me in TL, or open Issues, PR's, fork's as you wish.

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Helpful Moderator Userscripts
 // @namespace    https://github.com/mattlunn/so-mod
-// @version      1.10
+// @version      1.11
 // @author       Matt
 // @match       *://*.askubuntu.com/*
 // @match       *://*.mathoverflow.net/*
@@ -52,10 +52,12 @@
 					this.settings.preferences.highlight_cm_contacts_on_profile = true;
 				case 4:
 					this.settings.preferences.must_click_esc_to_close_popups = true;
+				case 5:
+					this.settings.preferences.add_reputation_to_flag_page = true;
 			}
 
-			this.settings.version = 5;
-			this.version = '1.10';
+			this.settings.version = 6;
+			this.version = '1.11';
 		}
 
 		Settings.prototype.save = function () {
@@ -134,6 +136,17 @@
 			}
 
 			return str;
+		},
+
+		thousands: function (value) {
+			var rgx = /(\d+)(\d{3})/;
+			value = value.toString();
+
+			while (rgx.test(value)) {
+				value = value.replace(rgx, '$1,$2');
+			}
+
+			return value;
 		}
 	};
 
@@ -486,6 +499,31 @@
 			$(document).on('popupClosing', function (e) {
 				if (e.closeTrigger === 'click outside') {
 					e.preventDefault();
+				}
+			});
+		}
+	});
+
+	Settings.init().done(function (settings) {
+		if (settings.settings.preferences.add_reputation_to_flag_page && window.location.pathname === '/admin/dashboard') {
+			var map = {};
+
+			$('.flag-row a[href^="/users/"]').each(function () {
+				var id;
+
+				try {
+					id = helpers.idFromUrl($(this).prop('href'));
+				} catch (e) {
+					return;
+				}
+
+				map[id] = map[id] || [];
+				map[id].push(this);
+			});
+
+			jQuery.get('http://api.stackexchange.com/2.2/users/' + Object.keys(map).join(';') + '?order=desc&sort=reputation&site=stackoverflow&pagesize=100&filter=!*MxJcsZ)vC2RZAFo').done(function (response) {
+				for (var i=0;i<response.items.length;i++) {
+					$(map[response.items[i].user_id]).after('<span style="color: #848d95"> (' + helpers.thousands(response.items[i].reputation) + ')</span>');
 				}
 			});
 		}
