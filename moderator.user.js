@@ -520,7 +520,7 @@
 				map[id].push(this);
 			});
 
-			jQuery.get('http://api.stackexchange.com/2.2/users/' + Object.keys(map).join(';') + '?order=desc&sort=reputation&site=stackoverflow&pagesize=100&filter=!*MxJcsZ)vC2RZAFo').done(function (response) {
+			jQuery.get('https://api.stackexchange.com/2.2/users/' + Object.keys(map).join(';') + '?order=desc&sort=reputation&site=stackoverflow&pagesize=100&filter=!*MxJcsZ)vC2RZAFo').done(function (response) {
 				for (var i=0;i<response.items.length;i++) {
 					$(map[response.items[i].user_id]).after('<span style="color: #848d95"> (' + helpers.thousands(response.items[i].reputation) + ')</span>');
 				}
