@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Helpful Moderator Userscripts
 // @namespace    https://github.com/mattlunn/so-mod
-// @version      1.11
+// @version      1.12
 // @author       Matt
 // @match       *://*.askubuntu.com/*
 // @match       *://*.mathoverflow.net/*
@@ -483,13 +483,12 @@
 				var self = $(this);
 				var name = jQuery.trim($('.name').text());
 				var id = helpers.idFromUrl(location.href);
-				var common = '<a href="#" data-user-id="' + id + '" data-user-name="' + name + '" data-message="' + helpers.escapeHtml(settings.settings.preferences.review_ban_message_from_profile) + '"';
+				var isBlocked = !self.find('.blocked-no').length;
 
-				if (!self.find('a').length) {
-					self.html(common + ' class="mattlunn-ban-user">no</a>');
-				} else {
-					self.append(' (' + common + ' class="mattlunn-unban-user">unban</a>)');
-				}
+				self.append('(<a href="#" data-user-id="' + id + '" data-user-name="' + name + '" '
+					+ 'data-message="' + helpers.escapeHtml(settings.settings.preferences.review_ban_message_from_profile) + '" '
+					+ 'class="mattlunn-' + (isBlocked ? 'unban' : 'ban') + '-user">'
+					+ (isBlocked ? 'unban' : 'ban') + '</a>)');
 			});
 		}
 	});
