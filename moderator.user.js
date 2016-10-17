@@ -437,12 +437,12 @@
 		});
 	});
 
-	if (window.location.pathname.startsWith('/review/')) {
+	if (/^(\/review|\/documentation\/review)\//.test(window.location.pathname)) {
 		jQuery.when(Settings.init(), reviewBans.init()).done(function (settings) {
 			function addBanningOptionsToReviewers() {
 				$('span.mattlunn-ban-toggler-container').remove();
 
-				$('div.review-results a').each(function () {
+				$('.review-results a').each(function () {
 					var self = $(this);
 					var id = helpers.idFromUrl(self.prop('href'));
 					var user = reviewBans.getBannedUser(id);
@@ -470,7 +470,7 @@
 					}
 				});
 
-				if ($('div.review-results').length) {
+				if ($('.review-results').length) {
 					addBanningOptionsToReviewers();
 				}
 			}
