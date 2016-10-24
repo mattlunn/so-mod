@@ -54,9 +54,12 @@
 					this.settings.preferences.must_click_esc_to_close_popups = true;
 				case 5:
 					this.settings.preferences.add_reputation_to_flag_page = true;
+				case 6:
+					delete this.settings.preferences.show_cm_count_on_profile;
+					delete this.settings.preferences.highlight_cm_contacts_on_profile;
 			}
 
-			this.settings.version = 6;
+			this.settings.version = 7;
 			this.version = '1.11';
 		}
 
@@ -358,49 +361,6 @@
 					});
 				}, 1)
 			});
-		}
-	});
-
-	Settings.init().done(function (settings) {
-		var match = location.pathname.match(/^\/users\/(\d+)/);
-		var id;
-
-		if (match !== null && settings.settings.preferences.show_cm_count_on_profile) {
-			id = match[1];
-
-			jQuery.get('/users/history/' + id + '?type=CM+team+contacted+about+user').done(function (html) {
-				var contacts = $(html).find('#user-history tbody tr');
-
-				if (contacts.length) {
-					$('<a title="cm escalations" style="padding: 2px 3px; margin-left: 0; background-color: #FB464F" class="mod-flag-indicator supernovabg" href="/users/history/' + id + '">' + contacts.length + '</a>').insertAfter('.user-moderator-link');
-				}
-			});
-		} else {
-			match = location.pathname.match(/^\/users\/history\/(\d+)/);
-
-			if (match !== null && settings.settings.preferences.highlight_cm_contacts_on_profile) {
-				id = match[1];
-
-				jQuery.get('/users/history/' + id + '?type=CM+team+contacted+about+user').done(function (html) {
-					var contacts = $(html).find('#user-history').prop('id', 'user-escalations').css('margin-bottom', 30);
-
-					contacts.find('tbody tr').each(function () {
-						var commentTd = $(this.cells[2]);
-						var actionTd = $(this.cells[1]);
-						var comment = commentTd.html();
-						var by = comment.slice(comment.lastIndexOf('by'));
-
-						actionTd.html(by.slice('by'.length));
-						commentTd.html(comment.slice(0, comment.length - by.length));
-					});
-
-					if (contacts.length) {
-						var div = $('<div class="clear-both" />');
-
-						div.append('<h2>CM Escalations</h2>').append(contacts).prependTo('#mainbar .content-page');
-					}
-				});
-			}
 		}
 	});
 
