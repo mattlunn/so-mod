@@ -169,13 +169,13 @@
 				
 				if (list === null) {
 					jQuery.get('/admin/review/bans').then(function (html) {
-						list = $(html).find('table.history-table tbody tr').get().map(function (el) {
+						list = $(html).find('table.sorter tbody tr').get().map(function (el) {
 							var row = $(el);
 							var a = row.find('td:first-child a');
 							var name = jQuery.trim(a.text());
 							var id = helpers.idFromUrl(a.prop('href'));
 							
-							return new BannedUser(id, name, new Date(row.find('span.relativetime').prop('title')));
+							return new BannedUser(id, name, new Date(row.find('td:nth-child(3) span.relativetime').prop('title')));
 						});
 						
 						def.resolve(self);
