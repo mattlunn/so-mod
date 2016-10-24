@@ -153,56 +153,6 @@
 		}
 	};
 
-	var reviewBans = (function () {
-		var list = null;
-		
-		function BannedUser(id, name, until) {
-			this.id = id;
-			this.name = name;
-			this.until = until;
-		}
-				
-		return {
-			init: function () {
-				var def = jQuery.Deferred();
-				var self = this;
-				
-				if (list === null) {
-					jQuery.get('/admin/review/bans').then(function (html) {
-						list = $(html).find('table.sorter tbody tr').get().map(function (el) {
-							var row = $(el);
-							var a = row.find('td:first-child a');
-							var name = jQuery.trim(a.text());
-							var id = helpers.idFromUrl(a.prop('href'));
-							
-							return new BannedUser(id, name, new Date(row.find('td:nth-child(3) span.relativetime').prop('title')));
-						});
-						
-						def.resolve(self);
-					});
-				} else {
-					def.resolve(this);
-				}
-				
-				return def.promise();
-			},
-			
-			isBanned: function (id) {
-				return list.some(function (user) {
-					return user.id == id;
-				});
-			},
-			
-			getBannedUser: function (id) {
-				for (var i=0;i<list.length;i++) {
-					if (list[i].id == id) {
-						return list[i];
-					}
-				}
-			}
-		};
-	}());
-
 	(function () {
 		function initManageLink(err, settings) {
 			jQuery(document).ready(function ($) {
@@ -398,25 +348,34 @@
 	});
 
 	if (/^(\/review|\/documentation\/review)\//.test(window.location.pathname)) {
-		jQuery.when(Settings.init(), reviewBans.init()).done(function (settings) {
+		Settings.init().done(function (settings) {
 			function addBanningOptionsToReviewers() {
 				$('span.mattlunn-ban-toggler-container').remove();
 
 				$('.review-results a').each(function () {
 					var self = $(this);
 					var id = helpers.idFromUrl(self.prop('href'));
-					var user = reviewBans.getBannedUser(id);
 					var name = jQuery.trim(self.text());
-					var common = ' <span class="mattlunn-ban-toggler-container">(<a href="#" data-user-id="' + id + '" data-user-name="' + name + '" data-message="' + helpers.escapeHtml(helpers.format(settings.settings.preferences.review_ban_message_from_review, {
-						review: window.location.href
-					})) + '"';
 
-					if (user) {
-						self.css('color', 'red').prop('title', 'User is banned from review until ' + user.until.toString());
-						self.after(common + ' class="mattlunn-unban-user">unban</a>)</span>');
-					} else {
-						self.after(common + ' class="mattlunn-ban-user">ban</a>)</span>');
-					}
+					jQuery.get(this.href).done(function (html) {
+						var banLink = $(html).find('.user-panel-mod-info a:contains(prior review bans)').text(function () {
+							return $(this).text().trim().replace(/^\(|\)$/g, '')
+						});
+						var isBlocked = banLink.length === 0;
+						var span = $('<span class="mattlunn-ban-toggler-container"> (</span>').insertAfter(self);
+						var a = $('<a href="#" data-user-id="' + id + '" data-user-name="' + name + '" data-message="' + helpers.escapeHtml(helpers.format(settings.settings.preferences.review_ban_message_from_review, {
+							review: window.location.href
+						})) + '"></a>').appendTo(span);
+
+						if (isBlocked) {
+							self.css('color', 'red');
+							a.addClass('mattlunn-unban-user').text('unban');
+							span.append(')');
+						} else {
+							a.addClass('mattlunn-ban-user').text('ban');
+							span.append(' - ').append(banLink).append(')');
+						}
+					});
 				});
 			}
 
