@@ -456,21 +456,17 @@
 
 		$(document).on('click', 'a.mattlunn-ban-user', function (e) {         
 			var self = $(this);
-			var select = '<select name="days">';
-			
-			for (var i=1;i<=30;i++) {
-				select += '<option>' + i +'</option>';
-			}
-			
-			select += '</select>';            
+
 			self.loadPopup({
 				html: [
 					'<div class="popup no-further-action-popup">',
 						'<form>',
 							'<div class="popup-close"><a title="close this popup (or hit Esc)">&times;</a></div><h2></h2>',
-							'<input type="hidden" name="fkey" value="' + StackExchange.options.user.fkey + '" /><input type="hidden" name="userId" value="' + self.data('user-id') + '" />',
+							'<input type="hidden" name="fkey" value="' + StackExchange.options.user.fkey + '" />',
+							'<input type="hidden" name="userId" value="' + self.data('user-id') + '" />',
+							'<input type="hidden" name="reviewBanChoice" value="days-other" />',
 							'<textarea rows="4" style="width: 450px" name="explanation">' + helpers.escapeHtml(self.data('message')) + '</textarea><br class="clear-both">',
-							'ban ' + helpers.escapeHtml(self.data('user-name')) + ' for ' + select + ' days <input type="submit" value="Ban" style="margin-left: 15px;">',
+							'ban ' + helpers.escapeHtml(self.data('user-name')) + ' for <input name="reviewBanDays" style="width: 40px" /> days <input type="submit" value="Ban" style="margin-left: 15px;">',
 						'</form>',
 					'</div>'
 				].join('')
