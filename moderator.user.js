@@ -317,12 +317,11 @@
 	Settings.init().done(function (settings) {
 		$(document).ajaxSend(function (e, xhr, options) {
 			if (options.url.startsWith('/admin/contact-user/template-popup/')) {
-				var fromUserName = $('.gravatar-wrapper-24').prop('title');
 				var toUserUrl = $('#addressing tr').filter(function () {
 					return jQuery.trim($(this).find('td:first-child').text()) === 'to';
 				}).find('.user-details a').prop('href');
 
-				if (!toUserUrl || !fromUserName) {
+				if (!toUserUrl) {
 					return;
 				}
 
@@ -330,7 +329,7 @@
 					var html = $('<div />').html(data);
 
 					html.find('ul').append(settings.settings.preferences.message_templates.map(function (item, i) {
-						var message = 'Hello,\n\nI&#39;m writing in reference to your Stack Overflow account:\n\n' + toUserUrl + '\n\n' + item.message + '\n\nRegards  \n' + fromUserName + '  \nStack Overflow moderator';
+						var message = 'Hello,\n\nI&#39;m writing in reference to your Stack Overflow account:\n\n' + toUserUrl + '\n\n' + item.message + '\n\nRegards  \n' + StackExchange.options.site.name  + ' Moderation Team';
 
 						return [
 							'<li>',
@@ -454,7 +453,7 @@
 			}).siblings('a').css('color', a.hasClass('mattlunn-ban-user') ? '' : 'red');
 		}
 
-		$(document).on('click', 'a.mattlunn-ban-user', function (e) {         
+		$(document).on('click', 'a.mattlunn-ban-user', function (e) {
 			var self = $(this);
 
 			self.loadPopup({
