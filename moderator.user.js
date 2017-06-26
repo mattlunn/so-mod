@@ -23,6 +23,10 @@
 (function () {
 	'use strict';
 
+	if (!StackExchange.options.user.isModerator) {
+		return;
+	}
+
 	var Settings = (function () {
 		var key = 'mattlunn-moderator-settings';
 		var master = null;
