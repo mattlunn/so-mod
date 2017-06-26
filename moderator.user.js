@@ -159,7 +159,7 @@
 				$('<a href="#">manage SO-mod userscript ' + (err ? '<span style="color:red">could not load settings (' + err + ')</span>' : '') + '</a>').on('click', function (e) {
 					e.preventDefault();
 					
-					$(this).loadPopup({
+					$('#content').loadPopup({
 						html: [
 							'<div class="popup no-further-action-popup">',
 								'<div class="popup-close"><a title="close this popup (or hit Esc)">&times;</a></div><h2>SO-mod Userscript Settings (v' + settings.version + '):</h2>',
