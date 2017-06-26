@@ -243,7 +243,7 @@
 							}
 						});
 					});
-				}).appendTo('#svnrev').before(' | ');
+				}).appendTo('#svnrev').before('&nbsp;|&nbsp;');
 			});
 		}
 
