@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Helpful Moderator Userscripts
 // @namespace    https://github.com/mattlunn/so-mod
-// @version      1.14
+// @version      1.15
 // @author       Matt
 // @match       *://*.askubuntu.com/*
 // @match       *://*.mathoverflow.net/*
@@ -64,7 +64,7 @@
 			}
 
 			this.settings.version = 7;
-			this.version = '1.14';
+			this.version = '1.15';
 		}
 
 		Settings.prototype.save = function () {
