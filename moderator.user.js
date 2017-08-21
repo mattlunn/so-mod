@@ -44,12 +44,12 @@
 						],
 						message_templates: [{
 							name: 'creating accounts to bypass question ban',
-							message: 'Please stop creating new accounts to circumvent your question ban. Instead, read the following advise and edit your *existing* content to bring it inline with the site\'s guidelines.\n\nhttp://stackoverflow.com/help/question-bans\n\nI have deleted the additional accounts you created. Do not create any more.'
+							message: 'Please stop creating new accounts to circumvent your question ban. Instead, read [the advice we provide](http://stackoverflow.com/help/question-bans) and edit your *existing* content to bring it in line with the site\'s guidelines.\n\nI have deleted the additional accounts you created. Do not create any more.'
 						}],
 					};
 				case 2:
-					this.settings.preferences.review_ban_message_from_profile = 'A number of your recent reviews have been incorrect. Please pay more attention to each review in the future';
-					this.settings.preferences.review_ban_message_from_review = 'You reviewed {{review}} incorrectly. Please pay more attention to each review in future';
+					this.settings.preferences.review_ban_message_from_profile = 'A number of your recent reviews have been incorrect. Please pay more attention to each review in the future.';
+					this.settings.preferences.review_ban_message_from_review = 'You reviewed {{review}} incorrectly. Please pay more attention to each review in the future.';
 				case 3:
 					this.settings.preferences.annotation_for_comment = 'Left the following comment on {{post}}: "{{comment}}"'
 					this.settings.preferences.show_cm_count_on_profile = true;
